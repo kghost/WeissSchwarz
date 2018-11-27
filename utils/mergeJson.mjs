@@ -8,9 +8,9 @@ function mergeArray(orig, update) {
 
 function mergeObject(orig, update) {
 	Object.entries(update).forEach(([k, v]) => {
-		if (orig.hasOwnProperty(k))
+		if (orig.hasOwnProperty(k)) {
 			orig[k] = mergeAll(orig[k], v)
-		else
+		} else
 			orig[k] = v
 	})
 
@@ -20,6 +20,7 @@ function mergeObject(orig, update) {
 function mergeAll(orig, update) {
 	if (typeof orig != typeof update) return update;
 	if (typeof orig != 'object') return update;
+	if (orig == null) return update;
 	if (Array.isArray(orig) != Array.isArray(update)) return update;
 	if (Array.isArray(orig)) return mergeArray(orig, update); else return mergeObject(orig, update);
 }

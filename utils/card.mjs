@@ -11,29 +11,47 @@ async function getCard(browser, cardno) {
 	console.log(`loading ${url}`)
 	await page.goto(url)
 	const card = await page.evaluate(() => {
-		const sides = (url) => {
-			if (url.endsWith("w.gif")) return "W";
-			if (url.endsWith("b.gif")) return "B";
-			throw "Unknown side";
+		const img2Trigger = {
+			SOUL: "Soul",
+			STOCK: "Pool",
+			SALVAGE: "ComeBack",
+			BOUNCE: "Return",
+			DRAW: "Draw",
+			TREASURE: "Treasure",
+			SHOT: "Shot",
+			GATE: "Gate"
 		}
-		const colors = (url) => {
-			if (url.endsWith("green.gif")) return "GREEN";
-			if (url.endsWith("red.gif")) return "RED";
-			if (url.endsWith("yellow.gif")) return "YELLOW";
-			if (url.endsWith("blue.gif")) return "BLUE";
-			throw "Unknown color";
+
+		const imgName = (url) => {
+			return url.split('/').pop().split('.')[0].toUpperCase()
 		}
-		const triggers = (url) => {
-			if (url.endsWith("soul.gif")) return "Soul";
-			if (url.endsWith("stock.gif")) return "Pool";
-			if (url.endsWith("salvage.gif")) return "ComeBack";
-			if (url.endsWith("bounce.gif")) return "Return";
-			if (url.endsWith("draw.gif")) return "Draw";
-			if (url.endsWith("treasure.gif")) return "Treasure";
-			if (url.endsWith("shot.gif")) return "Shot";
-			if (url.endsWith("gate.gif")) return "Gate";
-			throw "Unknown trigger";
+
+		const traits = (text) => { return text.split("・").filter(x => x != "-") }
+
+		const textTrans = (node) => {
+			node.find("img").each(function () {
+				const name = imgName($(this).prop("src"))
+				const trigger = img2Trigger[name]
+				if (trigger != undefined)
+					this.replaceWith(`[TRIGGER:${trigger}]`)
+				else
+					this.replaceWith(`[IMG:name]`)
+			})
+			return node.get(0).innerText
 		}
+
+		const colors = (node) => {
+			const img = node.find("img");
+			if (img.length > 0) return imgName(img.attr("src"))
+			else {
+				const v = ({
+					"紫": "PURPLE"
+				})[node.text()]
+				if (typeof v != 'string') throw "Unknown color";
+				return v
+			}
+		}
+
 		const img = $("#cardDetail td.graphic img")
 		const image = {
 			uri: img.prop("src"),
@@ -50,12 +68,12 @@ async function getCard(browser, cardno) {
 				.next().find("span").text(),
 			rarity: $("#cardDetail > table > tbody > tr > th").filter(":contains('Rarity'),:contains('レアリティ')")
 				.next().text(),
-			side: sides($("#cardDetail > table > tbody > tr > th").filter(":contains('Side'),:contains('サイド')")
+			side: imgName($("#cardDetail > table > tbody > tr > th").filter(":contains('Side'),:contains('サイド')")
 				.next().find("img").attr("src")),
 			type: $("#cardDetail > table > tbody > tr > th").filter(":contains('Card Type'),:contains('種類')")
 				.next().text(),
 			color: colors($("#cardDetail > table > tbody > tr > th").filter(":contains('Color'),:contains('色')")
-				.next().find("img").attr("src")),
+				.next()),
 			level: parseInt($("#cardDetail > table > tbody > tr > th").filter(":contains('Level'),:contains('レベル')")
 				.next().text()),
 			cost: parseInt($("#cardDetail > table > tbody > tr > th").filter(":contains('Cost'),:contains('コスト')")
@@ -65,9 +83,11 @@ async function getCard(browser, cardno) {
 			soul: $("#cardDetail > table > tbody > tr > th").filter(":contains('Soul'),:contains('ソウル')")
 				.next().find("img").length,
 			trigger: $("#cardDetail > table > tbody > tr > th").filter(":contains('Trigger'),:contains('トリガー')")
-				.next().find("img").toArray().map(x => triggers(x.getAttribute("src"))),
-			text: $("#cardDetail > table > tbody > tr > th").filter(":contains('Text'),:contains('テキスト')")
-				.next().text(),
+				.next().find("img").toArray().map(x => img2Trigger[imgName(x.getAttribute("src"))]),
+			traits: traits($("#cardDetail > table > tbody > tr > th").filter(":contains('Special Attribute'),:contains('特徴')")
+				.next().text()),
+			text: textTrans($("#cardDetail > table > tbody > tr > th").filter(":contains('Text'),:contains('テキスト')")
+				.next()),
 			flavor: $("#cardDetail > table > tbody > tr > th").filter(":contains('Flavor Text'),:contains('フレーバー')")
 				.next().text(),
 			illustrator: $("#cardDetail > table > tbody > tr > th").filter(":contains('Illustrator')")
@@ -87,12 +107,7 @@ if (require.main === module) {
 	(async () => {
 		const fs = require('fs')
 		const { merge } = require('./mergeJson.mjs')
-		const res = await request({
-			uri: `http://localhost:9222/json/version`,
-			json: true,
-			resolveWithFullResponse: true
-		})
-		const browser = await puppeteer.connect({browserWSEndpoint: res.body.webSocketDebuggerUrl});
+		const browser = await puppeteer.launch({slowMo: 500, args: ['--no-sandbox']})
 
 		const cards = require('./cardlist.json')
 		const root = 'data'
@@ -102,11 +117,11 @@ if (require.main === module) {
 			const cardno = cards[i]
 			const [title, code] = cardno.split('/')
 			const [pack, number] = code.split('-')
-			getCard(browser, cardno)
-				.then(card => merge(`${root}/${title}/${pack}/${number}.json`, card))
-				.then(x => fetch(i+1))
+			const card = await getCard(browser, cardno)
+			await merge(`${root}/${title}/${pack}/${number}.json`, card)
+			await fetch(i+1)
 		}
-		await fetch(0)
+		await fetch(20617)
 	})()
 }
 
