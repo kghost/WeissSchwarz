@@ -1,0 +1,10 @@
+{
+  "name": "WeissSchwarz",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "gulp": "^4.0.0",
+    "injection-js": "^2.2.1"
+  },
+  "devDependencies": {}
+}
