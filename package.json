@@ -3,11 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/gulp": "^4.0.5",
+    "@types/puppeteer": "^1.11.1",
     "gulp": "^4.0.0",
     "gulp-typescript": "^5.0.0-alpha.3",
-    "injection-js": "^2.2.1",
     "json-stable-stringify": "^1.0.1",
-    "typescript": "^3.1.6"
+    "puppeteer": "^1.11.0",
+    "ts-node": "^7.0.1",
+    "tslib": "^1.9.3",
+    "typescript": "^3.2.2"
   },
   "devDependencies": {}
 }
