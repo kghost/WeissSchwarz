@@ -1,15 +1,15 @@
-import { sites } from './sites'
-import { PageFactory } from './PageFactory'
+import { sites } from './sites';
+import { PageFactory } from './PageFactory';
 
-export default async function (recursive: boolean, url: string) {
-  const factory = new PageFactory()
+export default async function(recursive: boolean, url: string) {
+  const factory = new PageFactory();
   try {
     for (const site of Object.values(sites)) {
       if (site.canHandle(url)) {
-        await site.scrap(factory, url)
+        const result = await site.scrap(factory, url);
       }
     }
   } finally {
-    await factory.close()
+    await factory.close();
   }
 }

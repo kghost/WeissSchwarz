@@ -1,6 +1,6 @@
-import gulp from 'gulp'
-import UndertakerRegistry from "undertaker-registry";
+import gulp from 'gulp';
+import UndertakerRegistry from 'undertaker-registry';
 
-import { TasksRegistry } from './gulps/registry'
+import { TasksRegistry } from './gulps/registry';
 
-gulp.registry(new TasksRegistry as UndertakerRegistry);
+gulp.registry(new TasksRegistry() as UndertakerRegistry);

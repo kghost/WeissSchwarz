@@ -12,13 +12,7 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [],
-    "lib": [
-      "esnext",
-      "dom",
-      "scripthost"
-    ],
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
-  },
+    "lib": ["esnext", "dom", "scripthost"],
+    "typeRoots": ["./node_modules/@types"]
+  }
 }

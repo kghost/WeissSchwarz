@@ -1,4 +1,4 @@
-import WsList from './list'
+import WsList from './list';
 import WsCard from './card';
 
-export { WsList, WsCard }
+export { WsList, WsCard };

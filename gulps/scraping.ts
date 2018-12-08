@@ -1,5 +1,5 @@
-import scraping from '../scraping'
+import scraping from '../scraping';
 
-export default async function (url: string) {
-  await scraping(false, url)
+export default async function(url: string) {
+  await scraping(false, url);
 }
