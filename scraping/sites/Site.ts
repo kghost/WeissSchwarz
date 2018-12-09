@@ -1,9 +1,10 @@
 import { ScrapingResult, ScrapingSource } from '../ScrapingResult';
 import { PageFactory } from '../PageFactory';
+import { Source } from '../../store/source';
 
 export interface IScrapingSite {
   canHandle(url: string): boolean;
-  scrap(pageFactory: PageFactory, url: string): Promise<ScrapingResult>;
+  scrap(pageFactory: PageFactory, source: Source): Promise<ScrapingResult>;
 }
 
 export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
@@ -18,12 +19,16 @@ export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
     return;
   }
   protected abstract fetch(u: U): V;
-  protected async afterFetch(v: V): Promise<ScrapingResult> {
+  protected async afterFetch(source: Source, v: V): Promise<ScrapingResult> {
     return (v as any) as ScrapingResult;
   }
 
-  async scrap(pageFactory: PageFactory, url: string): Promise<ScrapingResult> {
+  async scrap(
+    pageFactory: PageFactory,
+    source: Source
+  ): Promise<ScrapingResult> {
     const page = await pageFactory.get();
+    const url = (source as ScrapingSource).uri;
     try {
       console.log(`preparing ${url}`);
       const u = await this.preFetch();
@@ -32,10 +37,10 @@ export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
       console.log(`loaded ${url}`);
       const v = await page.evaluate(this.fetch, [u]);
       console.log(`fetched ${url}`);
-      const r = await this.afterFetch(v);
+      const r = await this.afterFetch(source, v);
       console.log(`done ${url}`);
-      r.source = new ScrapingSource(url);
-      console.log(JSON.stringify(r));
+      await source.fetched();
+      r.source = source;
       return r;
     } finally {
       await page.close();

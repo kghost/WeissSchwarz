@@ -4,7 +4,7 @@ export class PageFactory {
   private browser: Browser | null = null;
 
   async close() {
-    await (this.browser as Browser).close();
+    if (this.browser) await this.browser.close();
   }
 
   async get(): Promise<Page> {
