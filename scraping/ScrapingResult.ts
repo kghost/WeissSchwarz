@@ -18,8 +18,8 @@ export class ScrapingSource extends Source {
 }
 
 export class ScrapingResult {
-  source?: Source;
-  language?: Language;
-  results?: Map<Entity, Entry[]>;
-  follows?: SourceInfo[];
+  public source?: Source;
+  public language?: Language;
+  public results?: Map<Entity, Entry[]>;
+  public follows?: SourceInfo[];
 }

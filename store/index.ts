@@ -23,8 +23,15 @@ export class Entry {
   ) {}
 
   public merge(that: Entry) {
-    if (this.content != that.content) {
+    if (deepEqual(this.content, that.content)) {
+      for (const source of that.sources) {
+        if (!this.sources.find((os) => deepEqual(source, os))) {
+          this.sources.push(source);
+        }
+      }
+      return true;
     }
+    return false;
   }
 }
 
@@ -43,7 +50,7 @@ export class Entity {
     try {
       return { fd: await open(p, 'r+'), exist: true };
     } catch (e) {
-      if (e.code != 'ENOENT') throw e;
+      if (e.code !== 'ENOENT') throw e;
       return { fd: await open(p, 'wx'), exist: false };
     }
   }
@@ -70,26 +77,15 @@ export class Entity {
     const { fd, cache, json } = await this.readInfo();
     try {
       for (const e of entries) {
-        const oes = json[e.name];
+        const oes = json[e.name] as Entry[];
         if (oes) {
-          function tryMerge(oes: Entry[]) {
-            for (const oe of oes) {
-              if (deepEqual(oe.content, e.content)) {
-                for (const source of e.sources)
-                  if (!oe.sources.find(os => deepEqual(source, os)))
-                    oe.sources = oe.sources.concat(e.sources);
-                return true;
-              }
-            }
-            return false;
-          }
-          if (!tryMerge(oes)) oes.push(e);
+          if (!oes.find((oe) => oe.merge(e))) oes.push(e);
         } else {
           json[e.name] = [e];
         }
       }
       const ns = stringyfy(json, { space: 2 });
-      if (cache == ns) return;
+      if (cache === ns) return;
       await fd.write(ns, 0);
     } finally {
       fd.close();
@@ -117,8 +113,8 @@ export class EntityPack extends Entity {
 
 export function EntityCardFromNo(no: string) {
   const [title, code] = no.split('/');
-  const [exp, number] = code.split('-');
-  return new EntityCard(title, exp, number);
+  const [exp, num] = code.split('-');
+  return new EntityCard(title, exp, num);
 }
 
 export class EntityCard extends Entity {

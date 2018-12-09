@@ -1,22 +1,24 @@
 import UndertakerRegistry from 'undertaker-registry';
 
 export class TasksRegistry extends UndertakerRegistry {
-  private _tasks: any = {};
+  private ts: any = {};
 
-  get<TTaskFunction>(taskname: string) {
+  public get<TTaskFunction>(taskname: string) {
     const [ns, ...args] = taskname.split('|');
-    return ((async () => {
+    const f = async () => {
       const m = await import(`./${ns}`);
       await m.default(...args);
-    }) as any) as TTaskFunction;
+    };
+    f.name = taskname;
+    return (f as any) as TTaskFunction;
   }
 
-  set<TTaskFunction>(name: string, fn: TTaskFunction): TTaskFunction {
-    this._tasks[name] = fn;
+  public set<TTaskFunction>(name: string, fn: TTaskFunction): TTaskFunction {
+    this.ts[name] = fn;
     return fn;
   }
 
-  tasks() {
-    return this._tasks;
+  public tasks() {
+    return this.ts;
   }
 }

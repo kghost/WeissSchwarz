@@ -9,7 +9,7 @@ export interface IScrapingSite {
 
 export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
   implements IScrapingSite {
-  abstract readonly match: RegExp;
+  public abstract readonly match: RegExp;
 
   public canHandle(url: string) {
     return !!url.match(this.match);
@@ -23,7 +23,7 @@ export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
     return (v as any) as ScrapingResult;
   }
 
-  async scrap(
+  public async scrap(
     pageFactory: PageFactory,
     source: Source
   ): Promise<ScrapingResult> {

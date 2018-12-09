@@ -9,8 +9,9 @@ export default async function(recursive: boolean, url: string) {
       if (site.canHandle(url)) {
         const result = await site.scrap(factory, new ScrapingSource(url));
         if (result.results) {
-          for (const [entity, entries] of result.results)
+          for (const [entity, entries] of result.results) {
             await entity.update(entries);
+          }
         }
         if (result.follows) {
           for (const source of result.follows) await source.save();

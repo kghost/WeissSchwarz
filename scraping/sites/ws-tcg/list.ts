@@ -11,7 +11,7 @@ export default new class extends ScrapingSite<void, any> {
     // links
     const next = Array.from(
       document.querySelectorAll('#searchResults > p.pager > span.next > a')
-    ).map(e => (e as HTMLAnchorElement).href);
+    ).map((e) => (e as HTMLAnchorElement).href);
 
     // data
     const img2Trigger: any = {
@@ -30,10 +30,10 @@ export default new class extends ScrapingSite<void, any> {
     }
 
     const textTrans = (node: HTMLSpanElement) => {
-      Array.from(node.querySelectorAll('img')).map(i => {
+      Array.from(node.querySelectorAll('img')).map((i) => {
         const name = imgName(i.src);
         const trigger = img2Trigger[name];
-        if (trigger != undefined) i.replaceWith(`[TRIGGER:${trigger}]`);
+        if (trigger !== undefined) i.replaceWith(`[TRIGGER:${trigger}]`);
         else i.replaceWith(`[IMG:name]`);
       });
       return node.innerText;
@@ -41,7 +41,7 @@ export default new class extends ScrapingSite<void, any> {
 
     const cards = Array.from(
       document.querySelectorAll('#searchResults > div > table > tbody > tr')
-    ).map(e => {
+    ).map((e) => {
       return {
         no: (e.querySelector(
           'td > h4 > a > span:nth-child(2)'
@@ -77,7 +77,7 @@ export default new class extends ScrapingSite<void, any> {
         ),
         soul: Array.from(
           e.querySelectorAll('td > span:nth-child(8) > img')
-        ).map(e => imgName((e as HTMLImageElement).src)).length,
+        ).map((e2) => imgName((e2 as HTMLImageElement).src)).length,
         cost: parseInt(
           (e.querySelector(
             'td > span:nth-child(9)'
@@ -89,7 +89,7 @@ export default new class extends ScrapingSite<void, any> {
         ) as HTMLSpanElement).innerText.replace(/^レアリティ：/, ''),
         trigger: Array.from(
           e.querySelectorAll('td > span:nth-child(12) > img')
-        ).map(e => imgName((e as HTMLImageElement).src)),
+        ).map((e2) => imgName((e2 as HTMLImageElement).src)),
         trait: (e.querySelector(
           'td > span:nth-child(13) > span'
         ) as HTMLSpanElement).innerText.split(/・/),
@@ -115,7 +115,7 @@ export default new class extends ScrapingSite<void, any> {
       results.set(
         EntityCardFromNo(e.no),
         Object.entries(e)
-          .filter(([k, v]) => k != 'link')
+          .filter(([k, v]) => k !== 'link')
           .map(([k, v]) => {
             return new Entry(k, v, [source]);
           })

@@ -3,7 +3,6 @@ import { promises } from 'fs';
 const { open } = promises;
 import { mkdirp } from 'fs-extra';
 
-import stringify from 'json-stable-stringify';
 import deepEqual = require('deep-equal');
 
 export class Tag {
@@ -30,7 +29,7 @@ export abstract class Source {
       try {
         return { fd: await open(p, 'r+'), exist: true };
       } catch (e) {
-        if (e.code != 'ENOENT') throw e;
+        if (e.code !== 'ENOENT') throw e;
         return { fd: await open(p, 'wx'), exist: false };
       }
     } else {
@@ -42,13 +41,14 @@ export abstract class Source {
     const { fd, exist } = await this.openFile();
     try {
       if (!exist) return { fd, json: new SourceInfo(this) };
-      else
+      else {
         return {
           fd,
           json: JSON.parse(
             await fd.readFile({ encoding: 'utf8' })
           ) as SourceInfo,
         };
+      }
     } catch (e) {
       console.log(`discard ${this.filepath}: ${e}`);
       fd.close();
