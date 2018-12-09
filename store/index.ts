@@ -76,7 +76,7 @@ export class Entity {
             for (const oe of oes) {
               if (deepEqual(oe.content, e.content)) {
                 for (const source of e.sources)
-                  if (!oe.sources.find(os => source.equals(os)))
+                  if (!oe.sources.find(os => deepEqual(source, os)))
                     oe.sources = oe.sources.concat(e.sources);
                 return true;
               }

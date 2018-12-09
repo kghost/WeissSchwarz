@@ -8,10 +8,6 @@ export class ScrapingSource extends Source {
     super('scraping');
   }
 
-  public equals(that: Source): boolean {
-    return super.equals(that) && this.uri == (that as ScrapingSource).uri;
-  }
-
   get hash(): number {
     return stringHash(this.uri);
   }

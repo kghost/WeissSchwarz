@@ -4,6 +4,7 @@ const { open } = promises;
 import { mkdirp } from 'fs-extra';
 
 import stringify from 'json-stable-stringify';
+import deepEqual = require('deep-equal');
 
 export class Tag {
   constructor(public name: string, public attributes?: any) {}
@@ -15,10 +16,6 @@ export abstract class Source {
   constructor(public type: string) {}
   abstract get hash(): number;
   abstract get path(): string;
-
-  public equals(that: Source) {
-    return this.type == that.type;
-  }
 
   private get filepath() {
     return `${sources}/${(this.hash % 256).toString(16).padStart(2, '0')}/${
@@ -83,7 +80,7 @@ export class SourceInfo {
   public async save() {
     const { fd, json } = await this.source.readInfo();
     try {
-      if (stringify(json.tags) != stringify(this.tags)) {
+      if (!deepEqual(json.tags, this.tags)) {
         await fd.truncate(0);
         await fd.write(
           JSON.stringify({
