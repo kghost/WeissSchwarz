@@ -1,6 +1,8 @@
 import stringHash from 'string-hash';
 
-import { Language, Entity, Entry } from '../store';
+import { Entity } from '../store';
+import { Entry, Language } from '../store/dao';
+
 import { Source, SourceInfo } from '../store/source';
 
 export class ScrapingSource extends Source {

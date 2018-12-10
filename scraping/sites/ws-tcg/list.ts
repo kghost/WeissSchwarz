@@ -1,7 +1,8 @@
 import { ScrapingResult, ScrapingSource } from '../../ScrapingResult';
 import { ScrapingSite } from '../Site';
-import { Language, Entity, Entry, EntityCardFromNo } from '../../../store';
+import { Entity, EntityCardFromNo } from '../../../store';
 import { Tag, SourceInfo, Source } from '../../../store/source';
+import { Entry, Language } from '../../../store/dao';
 import { getCardType } from './common';
 
 export default new class extends ScrapingSite<void, any> {

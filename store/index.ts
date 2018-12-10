@@ -3,68 +3,78 @@ import { promises } from 'fs';
 const { open } = promises;
 import { mkdirp } from 'fs-extra';
 
-import * as NestedError from 'nested-error-stacks';
-import stringyfy from 'json-stable-stringify';
-import deepEqual from 'deep-equal';
+import { default as NestedError } from 'nested-error-stacks';
+import stringify from 'json-stable-stringify';
 
-import { Source } from './source';
-
-export enum Language {
-  english,
-  japanese,
-}
-
-export class Entry {
-  constructor(
-    public name: string,
-    public content: any,
-    public sources: Source[],
-    public language?: Language
-  ) {}
-
-  public merge(that: Entry) {
-    if (deepEqual(this.content, that.content)) {
-      for (const source of that.sources) {
-        if (!this.sources.find((os) => deepEqual(source, os))) {
-          this.sources.push(source);
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-}
+import { Entry, serialize, deserialize } from './dao';
+import deepEqual = require('deep-equal');
 
 const db = './cache/db';
 
-export class Entity {
-  private get filepath() {
-    return `${db}/${this.path}`;
-  }
+export async function lockReadAndWrite(path: string, work: () => Promise<void>) {
+  await mkdirp(dirname(path));
 
-  constructor(public path: string) {}
+  let close: () => Promise<void> = async () => { return }
 
-  private async openFile() {
-    const p = this.filepath;
-    await mkdirp(dirname(p));
+  try {
+    let write: (s: string) => Promise<void> = async (s) => { return }
     try {
-      return { fd: await open(p, 'r+'), exist: true };
+      const fd = await open(path, 'r+')
+      write = async (s) => {
+        await fd.truncate(0)
+        await fd.write(stringify(s, { space: 2 }), 0);
+      }
+      close = async () => await fd.close()
     } catch (e) {
       if (e.code !== 'ENOENT') throw e;
-      return { fd: await open(p, 'wx'), exist: false };
+      const fd = await open(path, 'wx')
+
+      write = async (s) => {
+        await fd.truncate(0)
+        await fd.write(stringify(s, { space: 2 }), 0);
+      }
     }
+  } finally {
+    await close()
+  }
+}
+
+export class Entity {
+  private get filepath() {
+    return `${db}/${this.path}.json`;
   }
 
+  constructor(public path: string) { }
+
   private async readInfo() {
-    const { fd, exist } = await this.openFile();
+    const p = this.filepath;
+    await mkdirp(dirname(p));
+    let write: (s: string) => Promise<void> = async (s) => { return }
+    let close: () => Promise<void> = async () => { return }
     try {
-      if (!exist) return { fd, cache: '', json: {} };
+      const fd = await open(p, 'r+')
+      write = async (s) => {
+        await fd.truncate(0)
+        await fd.write(stringify(s, { space: 2 }), 0);
+      }
+      close = async () => await fd.close()
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
+      write = async (s) => {
+        const fd = await open(p, 'wx')
+        await fd.truncate(0)
+        await fd.write(stringify(s, { space: 2 }), 0);
+      }
+    }
+
+    try {
+      if (!exist) return { fd, cache: {}, json: deserialize({}) };
       else {
-        const cache = await fd.readFile({ encoding: 'utf8' });
+        const cache = JSON.parse(await fd.readFile({ encoding: 'utf8' }));
         return {
           fd,
           cache,
-          json: JSON.parse(cache) as any,
+          json: deserialize(cache),
         };
       }
     } catch (e) {
@@ -77,16 +87,17 @@ export class Entity {
     const { fd, cache, json } = await this.readInfo();
     try {
       for (const e of entries) {
-        const oes = json[e.name] as Entry[];
+        const oes = json.get(e.name) as Entry[];
         if (oes) {
           if (!oes.find((oe) => oe.merge(e))) oes.push(e);
         } else {
-          json[e.name] = [e];
+          json.set(e.name, [e]);
         }
       }
-      const ns = stringyfy(json, { space: 2 });
-      if (cache === ns) return;
-      await fd.write(ns, 0);
+      const nj = serialize(json)
+      if (deepEqual(cache, nj)) return;
+      console.log(`update ${this.path}`)
+      await fd.write(stringify(nj, { space: 2 }), 0);
     } finally {
       fd.close();
     }

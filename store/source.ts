@@ -5,11 +5,31 @@ import { mkdirp } from 'fs-extra';
 
 import deepEqual = require('deep-equal');
 
+
+import {
+  serialize,
+  deserialize,
+  getDefaultModelSchema,
+  custom
+} from 'serializr';
+
+import { ScrapingSource } from '../scraping/ScrapingResult';
+
 export class Tag {
   constructor(public name: string, public attributes?: any) {}
 }
 
 const sources = './cache/sources';
+
+export const SourceSchema = custom(
+  (v) => serialize(getDefaultModelSchema(v), v),
+  (json: any, _0: any, _1: any, done: (err: any, result: any) => void) => {
+    if ((json as Source).type === 'scraping') {
+      return deserialize(getDefaultModelSchema(ScrapingSource), json, done)
+    }
+    throw new Error(`Unknown source type ${json.type}`)
+  }
+)
 
 export abstract class Source {
   constructor(public type: string) {}

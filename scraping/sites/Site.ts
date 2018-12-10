@@ -3,7 +3,7 @@ import { PageFactory } from '../PageFactory';
 import { Source } from '../../store/source';
 
 export interface IScrapingSite {
-  canHandle(url: string): boolean;
+  canHandle(source: Source): boolean;
   scrap(pageFactory: PageFactory, source: Source): Promise<ScrapingResult>;
 }
 
@@ -11,8 +11,8 @@ export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
   implements IScrapingSite {
   public abstract readonly match: RegExp;
 
-  public canHandle(url: string) {
-    return !!url.match(this.match);
+  public canHandle(source: Source) {
+    return source.type == 'scraping' && !!(source as ScrapingSource).uri.match(this.match);
   }
 
   protected async preFetch(): Promise<U | undefined> {
