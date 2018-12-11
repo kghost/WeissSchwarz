@@ -3,12 +3,16 @@ import { PageFactory } from './PageFactory';
 import { ScrapingSource } from './ScrapingResult';
 import { Source, SourceInfo } from '../store/source';
 
-export default async function (recursive: boolean, url: string, filter: (si: SourceInfo) => boolean = (si) => false) {
+export default async function(
+  recursive: boolean,
+  url: string,
+  filter: (si: SourceInfo) => boolean = (si) => false
+) {
   const factory = new PageFactory();
   try {
-    const q: Source[] = [new ScrapingSource(url)]
+    const q: Source[] = [new ScrapingSource(url)];
     function* sources() {
-      while (q.length > 0) yield q.pop() as ScrapingSource
+      while (q.length > 0) yield q.pop() as ScrapingSource;
     }
 
     for (const source of sources()) {
@@ -23,7 +27,7 @@ export default async function (recursive: boolean, url: string, filter: (si: Sou
           if (result.follows) {
             for (const si of result.follows) {
               await si.save();
-              if (filter(si)) q.push(si.source)
+              if (filter(si)) q.push(si.source);
             }
           }
         }

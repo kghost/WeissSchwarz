@@ -66,10 +66,15 @@ export default new class extends ScrapingSite<void, any> {
           ) as HTMLSpanElement).innerText.replace(/^レベル：/, ''),
           10
         ),
-        color: imgName(
-          (e.querySelector('td > span:nth-child(6) > img') as HTMLImageElement)
-            .src
-        ),
+        color: (() => {
+          const e2 = e.querySelector('td > span:nth-child(6) > img');
+          if (e2 != null) return imgName((e2 as HTMLImageElement).src);
+          else {
+            return (e.querySelector(
+              'td > span:nth-child(6)'
+            ) as HTMLSpanElement).innerText.replace(/色：紫/, 'PURPLE');
+          }
+        })(),
         power: parseInt(
           (e.querySelector(
             'td > span:nth-child(7)'
@@ -100,6 +105,21 @@ export default new class extends ScrapingSite<void, any> {
         text: textTrans(e.querySelector(
           'td > span:nth-child(18)'
         ) as HTMLSpanElement),
+        image: (() => {
+          const img = e.querySelector('th > a > img') as HTMLImageElement;
+          if (
+            img.src !==
+            'https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/d/dc_w00/dc_w00_00.gif'
+          ) {
+            return {
+              uri: img.src,
+              size: {
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+              },
+            };
+          }
+        })(),
       };
     });
 
@@ -116,7 +136,7 @@ export default new class extends ScrapingSite<void, any> {
       results.set(
         EntityCardFromNo(e.no),
         Object.entries(e)
-          .filter(([k, v]) => k !== 'link')
+          .filter(([k, v]) => k !== 'link' && v !== undefined)
           .map(([k, v]) => {
             return new Entry(k, v, [source]);
           })

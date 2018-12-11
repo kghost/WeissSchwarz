@@ -1,23 +1,19 @@
-import { dirname } from 'path';
-import { promises } from 'fs';
-const { open } = promises;
-import { mkdirp } from 'fs-extra';
-
-import deepEqual = require('deep-equal');
-
+import deepEqual from 'deep-equal';
 
 import {
+  serializable,
   serialize,
   deserialize,
   getDefaultModelSchema,
-  custom
+  primitive,
+  custom,
+  raw,
+  object,
+  list,
 } from 'serializr';
 
 import { ScrapingSource } from '../scraping/ScrapingResult';
-
-export class Tag {
-  constructor(public name: string, public attributes?: any) {}
-}
+import { lockReadAndWrite } from './utils';
 
 const sources = './cache/sources';
 
@@ -25,95 +21,100 @@ export const SourceSchema = custom(
   (v) => serialize(getDefaultModelSchema(v), v),
   (json: any, _0: any, _1: any, done: (err: any, result: any) => void) => {
     if ((json as Source).type === 'scraping') {
-      return deserialize(getDefaultModelSchema(ScrapingSource), json, done)
+      return deserialize(getDefaultModelSchema(ScrapingSource), json, done);
     }
-    throw new Error(`Unknown source type ${json.type}`)
+    throw new Error(`Unknown source type ${json.type}`);
   }
-)
+);
 
 export abstract class Source {
-  constructor(public type: string) {}
+  @serializable(primitive())
+  public type: string;
+
+  constructor(type: string) {
+    this.type = type;
+  }
+
   abstract get hash(): number;
   abstract get path(): string;
 
-  private get filepath() {
+  public get filepath() {
     return `${sources}/${(this.hash % 256).toString(16).padStart(2, '0')}/${
       this.path
     }`;
   }
 
-  private async openFile(discard = false) {
-    const p = this.filepath;
-    await mkdirp(dirname(p));
-    if (!discard) {
-      try {
-        return { fd: await open(p, 'r+'), exist: true };
-      } catch (e) {
-        if (e.code !== 'ENOENT') throw e;
-        return { fd: await open(p, 'wx'), exist: false };
-      }
-    } else {
-      return { fd: await open(p, 'w+'), exist: false };
-    }
-  }
-
-  public async readInfo() {
-    const { fd, exist } = await this.openFile();
-    try {
-      if (!exist) return { fd, json: new SourceInfo(this) };
-      else {
-        return {
-          fd,
-          json: JSON.parse(
-            await fd.readFile({ encoding: 'utf8' })
-          ) as SourceInfo,
-        };
-      }
-    } catch (e) {
-      console.log(`discard ${this.filepath}: ${e}`);
-      fd.close();
-      return { fd: (await this.openFile(true)).fd, json: new SourceInfo(this) };
-    }
-  }
-
   public async fetched() {
-    const { fd, json } = await this.readInfo();
-    try {
-      json.fetched = Math.round(new Date().getTime() / 1000);
-      await fd.truncate(0);
-      await fd.write(JSON.stringify(json), 0);
-      console.log(`Source fetched: ${JSON.stringify(json)}`);
-    } finally {
-      await fd.close();
-    }
+    await lockReadAndWrite(this.filepath, async (s, write) => {
+      const data =
+        s === undefined
+          ? new SourceInfo(this)
+          : ((deserialize(SourceInfo, JSON.parse(s)) as any) as SourceInfo);
+      data.fetched = Math.round(new Date().getTime() / 1000);
+      const s2 = JSON.stringify(serialize(data));
+      console.log(`Source fetched: ${s2}`);
+      await write(s2);
+    });
+  }
+}
+
+export class Tag {
+  @serializable(primitive())
+  public name: string;
+
+  @serializable(raw())
+  public attributes?: any;
+
+  constructor(name: string, attributes?: any) {
+    this.name = name;
+    this.attributes = attributes;
   }
 }
 
 export class SourceInfo {
+  @serializable(SourceSchema)
+  public source: Source;
+
+  @serializable(list(object(Tag)))
+  public tags: Tag[];
+
+  @serializable(primitive())
+  public updated?: number;
+
+  @serializable(primitive())
+  public fetched?: number;
+
   constructor(
-    public source: Source,
-    public tags?: Tag[],
-    public updated?: number,
-    public fetched?: number
-  ) {}
+    source: Source,
+    tags: Tag[] = [],
+    updated?: number,
+    fetched?: number
+  ) {
+    this.source = source;
+    this.tags = tags;
+    this.updated = updated;
+    this.fetched = fetched;
+  }
 
   public async save() {
-    const { fd, json } = await this.source.readInfo();
-    try {
-      if (!deepEqual(json.tags, this.tags)) {
-        await fd.truncate(0);
-        await fd.write(
-          JSON.stringify({
-            ...json,
-            ...(this as any),
-            updated: Math.round(new Date().getTime() / 1000),
-          }),
-          0
-        );
-        console.log(`Source updated: ${JSON.stringify(this)}`);
+    await lockReadAndWrite(this.source.filepath, async (s, write) => {
+      if (s === undefined) {
+        const w = JSON.stringify(serialize(this));
+        console.log(`Source created: ${w} ${this.source.filepath}`);
+        await write(w);
+      } else {
+        const data = (deserialize(
+          SourceInfo,
+          JSON.parse(s)
+        ) as any) as SourceInfo;
+        if (!deepEqual(data.tags, this.tags)) {
+          this.fetched = data.fetched;
+          this.updated = Math.round(new Date().getTime() / 1000);
+          const w = JSON.stringify(serialize(this));
+          console.log(`Source updated: ${w} ${this.source.filepath}`);
+          await write(w);
+        }
       }
-    } finally {
-      await fd.close();
-    }
+    });
   }
 }

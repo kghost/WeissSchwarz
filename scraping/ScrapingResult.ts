@@ -1,13 +1,19 @@
 import stringHash from 'string-hash';
 
+import { serializable, primitive } from 'serializr';
+
 import { Entity } from '../store';
 import { Entry, Language } from '../store/dao';
 
 import { Source, SourceInfo } from '../store/source';
 
 export class ScrapingSource extends Source {
-  constructor(public uri: string) {
+  @serializable(primitive())
+  public uri: string;
+
+  constructor(uri: string) {
     super('scraping');
+    this.uri = uri;
   }
 
   get hash(): number {

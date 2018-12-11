@@ -12,7 +12,10 @@ export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
   public abstract readonly match: RegExp;
 
   public canHandle(source: Source) {
-    return source.type == 'scraping' && !!(source as ScrapingSource).uri.match(this.match);
+    return (
+      source.type === 'scraping' &&
+      !!(source as ScrapingSource).uri.match(this.match)
+    );
   }
 
   protected async preFetch(): Promise<U | undefined> {

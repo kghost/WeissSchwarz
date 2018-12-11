@@ -9,7 +9,7 @@ export class TasksRegistry extends UndertakerRegistry {
       [taskname]: async () => {
         const m = await import(`./${ns}`);
         await m.default(...args);
-      }
+      },
     };
     return (o[taskname] as any) as TTaskFunction;
   }
