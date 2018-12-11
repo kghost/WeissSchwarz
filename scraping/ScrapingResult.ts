@@ -16,6 +16,11 @@ export class ScrapingSource extends Source {
     this.uri = uri;
   }
 
+  protected compare2(that: ScrapingSource): number {
+    if (this.uri === that.uri) return 0;
+    else return this.uri > that.uri ? 1 : -1;
+  }
+
   get hash(): number {
     return stringHash(this.uri);
   }
