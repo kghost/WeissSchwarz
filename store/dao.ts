@@ -12,7 +12,8 @@ import {
   Context,
 } from 'serializr';
 
-import { Source, SourceSchema } from './source';
+import { Source } from './Source';
+import { SourceSchema } from './SourceSchema';
 
 export enum Language {
   english,

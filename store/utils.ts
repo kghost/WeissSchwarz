@@ -21,8 +21,8 @@ export async function lockReadAndWrite(
   work: (
     data: string | undefined,
     write: (s: string) => Promise<void>
-  ) => Promise<void>
-): Promise<void> {
+  ) => Promise<any>
+): Promise<any> {
   await mkdirp(dirname(path));
   const close: Array<() => Promise<void>> = [];
   try {
@@ -55,7 +55,7 @@ export async function lockReadAndWrite(
     const release = await GetFileLock(path).acquire();
     close.push(async () => await release());
 
-    await work(await read(), write);
+    return await work(await read(), write);
   } finally {
     for (const c of close.reverse()) await c();
   }

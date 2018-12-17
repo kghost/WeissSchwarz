@@ -1,6 +1,7 @@
-import { ScrapingResult, ScrapingSource } from '../ScrapingResult';
+import { ScrapingResult } from '../ScrapingResult';
+import { ScrapingSource } from '../ScrapingSource';
 import { PageFactory } from '../PageFactory';
-import { Source } from '../../store/source';
+import { Source } from '../../store/Source';
 
 export interface IScrapingSite {
   canHandle(source: Source): boolean;

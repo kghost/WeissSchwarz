@@ -1,7 +1,9 @@
-import { ScrapingResult, ScrapingSource } from '../../ScrapingResult';
+import { ScrapingResult } from '../../ScrapingResult';
+import { ScrapingSource } from '../../ScrapingSource';
 import { ScrapingSite } from '../Site';
 import { Entity, EntityCardFromNo } from '../../../store';
-import { Tag, SourceInfo, Source } from '../../../store/source';
+import { Source } from '../../../store/Source';
+import { Tag, SourceInfo } from '../../../store/SourceInfo';
 import { Entry, Language } from '../../../store/dao';
 import { getCardType } from './common';
 

@@ -2,8 +2,9 @@ import { RBTree } from 'bintrees';
 
 import { sites } from './sites';
 import { PageFactory } from './PageFactory';
-import { ScrapingSource } from './ScrapingResult';
-import { Source, SourceInfo } from '../store/source';
+import { ScrapingSource } from './ScrapingSource';
+import { Source } from '../store/Source';
+import { SourceInfo } from '../store/SourceInfo';
 
 export default async function(
   recursive: boolean,
