@@ -9,11 +9,16 @@ export class RuleTitle implements Rule {
     const expansion = e.exp;
     const result = await results.get(new EntityTitle(e.title));
     const entries = await entity.read();
+    const title = (entries.get('title') as any)[0].content;
+    const product = (entries.get('product') as any)[0].content;
+    const no = (entries.get('no') as any)[0].content;
 
-    if (!result.target.expansions) result.target.expansions = [];
-    const expansions = result.target.expansions as string[];
-    if (!expansions.includes(expansion)) expansions.push(expansion);
-
-    result.target.name = (entries.get('title') as any)[0].content;
+    result.target.withDefault('expansions', []).withDefault(expansion);
+    result.target
+      .withDefault('products', [])
+      .withDefault({ name: product })
+      .withDefault('cards', [])
+      .withDefault(no);
+    result.target.withConst('name', title);
   }
 }

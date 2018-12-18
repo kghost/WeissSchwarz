@@ -1,7 +1,4 @@
-import { serializable, serialize, deserialize, primitive } from 'serializr';
-
-import { lockReadAndWrite } from './utils';
-import { SourceInfo } from './SourceInfo';
+import { serializable, primitive } from 'serializr';
 
 const sources = './cache/sources';
 
@@ -26,18 +23,5 @@ export abstract class Source {
     return `${sources}/${(this.hash % 256).toString(16).padStart(2, '0')}/${
       this.path
     }`;
-  }
-
-  public async fetched() {
-    await lockReadAndWrite(this.cachepath, async (s, write) => {
-      const data =
-        s === undefined
-          ? new SourceInfo(this)
-          : ((deserialize(SourceInfo, JSON.parse(s)) as any) as SourceInfo);
-      data.fetched = Math.round(new Date().getTime() / 1000);
-      const s2 = JSON.stringify(serialize(data));
-      console.log(`Source fetched: ${s2}`);
-      await write(s2);
-    });
   }
 }

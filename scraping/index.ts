@@ -9,19 +9,20 @@ import { ScrapingResult } from './ScrapingResult';
 
 export async function scraping(
   factory: PageFactory,
-  source: Source
+  si: SourceInfo
 ): Promise<ScrapingResult | null> {
   for (const site of Object.values(sites)) {
-    if (site.canHandle(source)) {
-      const result = await site.scrap(factory, source);
+    if (site.canHandle(si.source)) {
+      const result = await site.scrap(factory, si.source);
       if (result.results) {
         for (const [entity, entries] of result.results) {
           await entity.update(entries);
         }
       }
       if (result.follows) {
-        for (const si of result.follows) await si.save();
+        for (const sif of result.follows) await sif.save();
       }
+      await si.updateFetched();
       return result;
     }
   }
@@ -37,19 +38,17 @@ export default async function(
   await factory.init();
   const visited = new RBTree((sa: Source, sb: Source) => sa.compare(sb));
   try {
-    const q: Source[] = [new ScrapingSource(url)];
-    function* sources() {
-      while (q.length > 0) yield q.pop() as ScrapingSource;
+    const q: SourceInfo[] = [new SourceInfo(new ScrapingSource(url))];
+    function* sis() {
+      while (q.length > 0) yield q.pop() as SourceInfo;
     }
 
-    for (const source of sources()) {
-      if (!visited.find(source)) {
-        visited.insert(source);
-        const result = await scraping(factory, source);
+    for (const si of sis()) {
+      if (!visited.find(si.source)) {
+        visited.insert(si.source);
+        const result = await scraping(factory, si);
         if (result != null && result.follows) {
-          for (const si of result.follows) {
-            if (filter(si)) q.push(si.source);
-          }
+          for (const sif of result.follows) if (filter(sif)) q.push(sif);
         }
       }
     }

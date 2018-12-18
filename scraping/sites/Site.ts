@@ -43,7 +43,6 @@ export abstract class ScrapingSite<U = undefined, V = ScrapingResult>
       console.log(`fetched ${url}`);
       const r = await this.afterFetch(source, v);
       console.log(`done ${url}`);
-      await source.fetched();
       r.source = source;
       return r;
     } finally {

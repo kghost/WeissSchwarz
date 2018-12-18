@@ -73,4 +73,17 @@ export class SourceInfo {
       }
     });
   }
+
+  public async updateFetched() {
+    await lockReadAndWrite(this.source.cachepath, async (s, write) => {
+      const data =
+        s === undefined
+          ? this
+          : ((deserialize(SourceInfo, JSON.parse(s)) as any) as SourceInfo);
+      data.fetched = Math.round(new Date().getTime() / 1000);
+      const s2 = JSON.stringify(serialize(data));
+      console.log(`Source fetched: ${s2}`);
+      await write(s2);
+    });
+  }
 }

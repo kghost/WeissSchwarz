@@ -34,12 +34,12 @@ export default async function() {
           })()) as SourceInfo;
 
           if (!si.fetched && si.tags.find((tag) => tag.name === 'card')) {
-            await parallel.do(async () => await scraping(factory, si.source));
+            await parallel.do(async () => await scraping(factory, si));
           }
         }
       }
     }
-    await r(dbCacheSrouces);
+    await r(`${dbCacheSrouces}`);
   } finally {
     await parallel.waitAll();
     await factory.close();

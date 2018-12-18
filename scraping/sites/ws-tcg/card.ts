@@ -6,7 +6,7 @@ import { Entry, Language } from '../../../store/dao';
 import { SourceInfo } from 'store/SourceInfo';
 
 export default new class extends ScrapingSite<void, any> {
-  public readonly match = /^https:\/\/ws-tcg.com\/cardlist\/\?cardno=([A-Z0-9\/-]*)(?:&.*)?$/;
+  public readonly match = /^https:\/\/ws-tcg.com\/cardlist\/\?cardno=([a-zA-Z0-9\/_%-]*)(?:&.*)?$/;
 
   protected fetch(u: void): any {
     return {
