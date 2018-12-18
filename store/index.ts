@@ -11,6 +11,7 @@ import { lockReadAndWrite } from './utils';
 
 export const dbFile = './data';
 export const dbCache = './cache/db';
+export const dbCacheSrouces = './cache/sources';
 
 export abstract class Entity {
   private cache: Map<string, Entry[]> | null = null;
@@ -57,10 +58,22 @@ export abstract class Entity {
     }
   }
 
-  public async update(entries: Entry[]) {
+  public async handle(
+    h: (data: Map<string, Entry[]>) => Promise<Map<string, Entry[]>>
+  ) {
     await lockReadAndWrite(this.cachepath, async (s, write) => {
-      const data =
+      this.cache =
         s === undefined ? deserialize({}) : deserialize(JSON.parse(s));
+      this.cache = await h(this.cache);
+      const n = stringify(serialize(this.cache), { space: 2 });
+      if (s === n) return;
+      console.log(`update ${this.path}`);
+      await write(n);
+    });
+  }
+
+  public async update(entries: Entry[]) {
+    await this.handle(async (data) => {
       for (const e of entries) {
         const oes = data.get(e.name) as Entry[];
         if (oes) {
@@ -69,11 +82,7 @@ export abstract class Entity {
           data.set(e.name, [e]);
         }
       }
-      this.cache = data;
-      const n = stringify(serialize(data), { space: 2 });
-      if (s === n) return;
-      console.log(`update ${this.path}`);
-      await write(n);
+      return data;
     });
   }
 

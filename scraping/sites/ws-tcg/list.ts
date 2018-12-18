@@ -53,8 +53,8 @@ export default new class extends ScrapingSite<void, any> {
         name: (e.querySelector(
           'td > h4 > a > span:nth-child(1)'
         ) as HTMLSpanElement).innerText,
-        title: ((e.querySelector('td > h4') as HTMLHeadingElement).childNodes[1]
-          .textContent as string).replace(/^ -/, ''),
+        product: ((e.querySelector('td > h4') as HTMLHeadingElement)
+          .childNodes[1].textContent as string).replace(/^ -/, ''),
         side: imgName(
           (e.querySelector('td > span:nth-child(2) > img') as HTMLImageElement)
             .src
