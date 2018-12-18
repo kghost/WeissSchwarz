@@ -4,7 +4,9 @@ export class PageFactory {
   private browser: Browser | null = null;
 
   public async init() {
-    this.browser = await launch();
+    this.browser = await launch({
+      args: ['--no-sandbox'],
+    });
   }
 
   public async close() {

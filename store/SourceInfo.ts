@@ -12,7 +12,7 @@ import {
 
 import { lockReadAndWrite } from './utils';
 import { Source } from './Source';
-import { SourceSchema } from './sourceSchema';
+import { SourceSchema } from './SourceSchema';
 
 export class Tag {
   @serializable(primitive())

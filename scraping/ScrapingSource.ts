@@ -2,7 +2,7 @@ import stringHash from 'string-hash';
 
 import { serializable, primitive } from 'serializr';
 
-import { Source } from '../store/source';
+import { Source } from '../store/Source';
 
 export class ScrapingSource extends Source {
   @serializable(primitive())

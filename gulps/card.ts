@@ -3,7 +3,7 @@ const { readdir, lstat } = promises;
 import { join } from 'path';
 import { deserialize } from 'serializr';
 
-import { parallel } from './parallel';
+import { Parallel } from './parallel';
 
 import { PageFactory } from '../scraping/PageFactory';
 import { SourceInfo } from '../store/SourceInfo';
@@ -14,8 +14,9 @@ import { scraping } from '../scraping';
 export default async function() {
   const factory = new PageFactory();
   await factory.init();
+  const parallel = new Parallel(10);
+
   try {
-    const f = parallel(10);
     async function r(dir: string) {
       for (const file of await readdir(dir)) {
         const fullPath = join(dir, file);
@@ -33,13 +34,14 @@ export default async function() {
           })()) as SourceInfo;
 
           if (!si.fetched && si.tags.find((tag) => tag.name === 'card')) {
-            await f(async () => await scraping(factory, si.source));
+            await parallel.do(async () => await scraping(factory, si.source));
           }
         }
       }
     }
     await r(dbCacheSrouces);
   } finally {
+    await parallel.waitAll();
     await factory.close();
   }
 }
